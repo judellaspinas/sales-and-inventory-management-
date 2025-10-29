@@ -141,3 +141,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   return httpServer;
 }
+
+import TransactionPage from "@/pages/TransactionPage";
+import Dashboard from "@/pages/dashboard";
+
+export const routes = [
+  { path: "/", component: Dashboard },
+  { path: "/transaction", component: TransactionPage },
+  // ... other routes
+];
+

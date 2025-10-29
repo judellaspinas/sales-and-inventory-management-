@@ -83,11 +83,20 @@ export default function Dashboard() {
                   Orders
                 </Button>
               </Link>
+
               <Link href="/profile">
                 <Button variant="outline" size="sm" data-testid="button-profile">
                   <User className="w-4 h-4 mr-2" />
                   Profile
                 </Button>
+                {user.role === "staff" && (
+                  <Link href="/transaction">
+                    <Button variant="outline" size="sm" data-testid="button-transaction">
+                     <DollarSign className="w-4 h-4 mr-2" />
+                 Create New Transaction
+            </Button>
+          </Link>
+            )}
               </Link>
               <Button variant="outline" size="sm" onClick={handleLogout} data-testid="button-logout">
                 <LogOut className="w-4 h-4 mr-2" />
