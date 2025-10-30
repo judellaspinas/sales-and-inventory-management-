@@ -1,10 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import {
-  loginSchema,
-  registerSchema,
-} from "@shared/schema";
+import { loginSchema, registerSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { ZodError } from "zod";
 
@@ -12,7 +9,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   /* ==========================
      AUTHENTICATION ROUTES
   ========================== */
-
   app.post("/api/login", async (req, res) => {
     try {
       const { username, password } = loginSchema.parse(req.body);
@@ -100,7 +96,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   /* ==========================
      ADMIN: RESET OR UNLOCK STAFF ACCOUNT
   ========================== */
-
   app.post("/api/admin/reset-password", async (req, res) => {
     try {
       const sessionId = req.cookies.sessionId;
@@ -142,12 +137,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   return httpServer;
 }
 
-import TransactionPage from "@/pages/TransactionPage";
+/* ==========================
+   FRONTEND ROUTES
+========================== */
 import Dashboard from "@/pages/dashboard";
+import TransactionPage from "@/pages/TransactionPage";
+import Products from "@/pages/products";
+import UsersPage from "@/pages/profile";
+
 
 export const routes = [
   { path: "/", component: Dashboard },
+  { path: "/dashboard", component: Dashboard },
+  { path: "/products", component: Products },
   { path: "/transaction", component: TransactionPage },
-  // ... other routes
+  { path: "/users", component: UsersPage },
+  
 ];
-
