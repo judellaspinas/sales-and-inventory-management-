@@ -2,9 +2,10 @@ import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import { createServer } from "http";
+
 dotenv.config();
 
 const app = express();
@@ -12,11 +13,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-// --- Logging Middleware ---
+/* =========================
+   Request Logging Middleware
+========================= */
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+  let capturedJsonResponse: Record<string, any> | undefined;
 
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
@@ -31,11 +34,7 @@ app.use((req, res, next) => {
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
+      if (logLine.length > 120) logLine = logLine.slice(0, 119) + "…";
       log(logLine);
     }
   });
@@ -44,8 +43,12 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // --- Connect to MongoDB ---
-  const uri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/loginDB";
+  /* =========================
+     MongoDB Connection
+  ========================= */
+  const uri =
+    process.env.MONGODB_URI || process.env.MONGO_URI || "mongodb://127.0.0.1:27017/loginDB";
+
   try {
     mongoose.set("strictQuery", true);
     await mongoose.connect(uri);
@@ -55,31 +58,35 @@ app.use((req, res, next) => {
     process.exit(1);
   }
 
-  const server = await registerRoutes(app);
+  const server = createServer(app); // ✅ Create HTTP server here
+  await registerRoutes(app);
 
-  // --- Global Error Handler ---
+  /* =========================
+     Global Error Handler
+  ========================= */
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     res.status(status).json({ message: err.message || "Internal Server Error" });
     console.error("Server error:", err);
   });
 
-  // --- Vite or Static Setup ---
+  /* =========================
+     Environment Handling
+  ========================= */
   if (app.get("env") === "development") {
+    // ✅ Pass both app and server to setupVite (fixes your TS error)
     await setupVite(app, server);
+
+    const port = parseInt(process.env.PORT || "3000", 10);
+    server.listen(port, () => log(`✅ Dev server running at http://localhost:${port}`));
   } else {
+    // ✅ For production (Vercel), no server.listen()
     serveStatic(app);
   }
 
-  // --- Cross-platform Server Listener ---
-  const port = parseInt(process.env.PORT || "3000", 10);
-  const host = process.platform === "win32" ? "127.0.0.1" : "0.0.0.0";
-
-  server.listen(port, host, () => {
-    log(`✅ Server running at http://${host}:${port}`);
-  });
-
-  // --- Graceful Shutdown ---
+  /* =========================
+     Graceful Shutdown
+  ========================= */
   const shutdown = async () => {
     try {
       await mongoose.disconnect();
@@ -91,3 +98,8 @@ app.use((req, res, next) => {
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
 })();
+
+/* =========================
+   ✅ Export Express App for Vercel
+========================= */
+export default app;
