@@ -17,6 +17,7 @@ import {
 /* ----------------------------- INTERFACE ---------------------------- */
 
 export interface IStorage {
+  getProductByManualId(id: any): unknown;
   unlockUserAccount: any;
   updateUserPassword(username: any, hashed: string): unknown;
   // Users
@@ -73,6 +74,7 @@ const UserModel = model("User", UserSchema);
 
 const ProductSchema = new Schema(
   {
+    id: { type: String, required: true, unique: true, index: true }, // ✅ Manual Product ID
     name: { type: String, required: true },
     description: { type: String, default: "" },
     price: { type: Number, required: true, default: 0 },
@@ -83,6 +85,7 @@ const ProductSchema = new Schema(
   },
   { versionKey: false }
 );
+
 const ProductModel = model("Product", ProductSchema);
 
 const OrderSchema = new Schema(
@@ -139,7 +142,7 @@ function mapUser(doc: any): User {
 function mapProduct(doc: any): Product {
   if (!doc) return undefined as any;
   return {
-    id: doc._id.toString(),
+    id: doc.id || doc._id.toString(),
     name: doc.name,
     description: doc.description || "",
     price: doc.price || 0,
@@ -293,6 +296,12 @@ class MongoStorage implements IStorage {
     const doc = await ProductModel.findById(id).lean();
     return doc ? mapProduct(doc) : undefined;
   }
+
+  async getProductByManualId(productId: string): Promise<Product | undefined> {
+    const doc = await ProductModel.findOne({ id: productId }).lean();
+    return doc ? mapProduct(doc) : undefined;
+  }
+  
 
   async createProduct(productData: InsertProduct): Promise<Product> {
     const doc = await ProductModel.create({

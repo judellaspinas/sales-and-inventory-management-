@@ -133,6 +133,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  /* ==========================
+     PRODUCT ROUTES
+  ========================== */
+
+  // <-- NEW: GET all products (was missing)
+  app.get("/api/products", async (req, res) => {
+    try {
+      const products = await storage.getAllProducts();
+      res.json(products);
+    } catch (err) {
+      console.error("Error fetching products:", err);
+      res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
+
+  app.get("/api/products/:id", async (req, res) => {
+    try {
+      const product =
+        (await storage.getProductByManualId(req.params.id)) ||
+        (await storage.getProduct(req.params.id));
+  
+      if (!product) return res.status(404).json({ message: "Product not found" });
+      res.json(product);
+    } catch (err) {
+      console.error("Error fetching product:", err);
+      res.status(500).json({ message: "Failed to fetch product" });
+    }
+  });
+  
+
+  app.post("/api/products", async (req, res) => {
+    try {
+      if (!req.body.id) {
+        return res.status(400).json({ message: "Product ID is required." });
+      }
+  
+      const existing = await storage.getProductByManualId?.(req.body.id);
+      if (existing) {
+        return res.status(409).json({ message: "Product ID already exists." });
+      }
+  
+      const product = await storage.createProduct(req.body);
+      res.status(201).json(product);
+    } catch (err) {
+      console.error("Error adding product:", err);
+      res.status(500).json({ message: "Failed to add product" });
+    }
+  });
+  
+
+  app.put("/api/products/:id", async (req, res) => {
+    try {
+      const updated = await storage.updateProduct(req.params.id, req.body);
+      if (!updated) return res.status(404).json({ message: "Product not found" });
+      res.json(updated);
+    } catch (err) {
+      console.error("Error updating product:", err);
+      res.status(500).json({ message: "Failed to update product" });
+    }
+  });
+
+  app.delete("/api/products/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteProduct(req.params.id);
+      if (!success) return res.status(404).json({ message: "Product not found" });
+      res.json({ message: "Product deleted" });
+    } catch (err) {
+      console.error("Error deleting product:", err);
+      res.status(500).json({ message: "Failed to delete product" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
@@ -145,12 +217,10 @@ import TransactionPage from "@/pages/TransactionPage";
 import Products from "@/pages/products";
 import UsersPage from "@/pages/profile";
 
-
 export const routes = [
   { path: "/", component: Dashboard },
   { path: "/dashboard", component: Dashboard },
   { path: "/products", component: Products },
   { path: "/transaction", component: TransactionPage },
   { path: "/users", component: UsersPage },
-  
 ];
