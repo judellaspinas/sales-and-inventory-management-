@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth } from "../attached_assets/use-auth_1757427482427";
+import { Button } from "../client/src/components/ui/button";
+import { Input } from "../client/src/components/ui/input";
+import { Label } from "../client/src/components/ui/label";
+import { Card, CardContent } from "../client/src/components/ui/card";
+import { Alert, AlertDescription } from "../client/src/components/ui/alert";
 import { Lock, Loader2 } from "lucide-react";
 
 const loginSchema = z.object({

@@ -1,8 +1,8 @@
 // src/context/AuthProvider.tsx
 import { createContext, useContext, ReactNode } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { User } from "@shared/schema";
+import { apiRequest } from "../client/src/lib/queryClient";
+import { User } from "../shared/schema";
 
 interface AuthContextType {
   user: User | null;

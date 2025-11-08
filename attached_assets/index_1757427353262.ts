@@ -3,8 +3,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import session from "express-session";
 import MemoryStore from "memorystore";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { registerRoutes } from "../server/routes";
+import { setupVite, serveStatic, log } from "../server/vite";
 
 dotenv.config();
 

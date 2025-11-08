@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Session, type RegisterRequest, type Product, type InsertProduct, type UpdateProduct } from "@shared/schema";
+import { type User, type InsertUser, type Session, type RegisterRequest, type Product, type InsertProduct, type UpdateProduct } from "../shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
 
@@ -46,7 +46,6 @@ export class MemStorage implements IStorage {
       lastName: "User",
       email: "admin@example.com",
       phone: null,
-      nationality: null,
       role: "admin",
       supply: null,
       supplyQuantity: null,
@@ -64,7 +63,6 @@ export class MemStorage implements IStorage {
       lastName: "Doe",
       email: "user@example.com",
       phone: null,
-      nationality: null,
       role: "user",
       supply: null,
       supplyQuantity: null,
@@ -81,15 +79,30 @@ export class MemStorage implements IStorage {
   private seedProducts() {
     // Create demo products
     const products = [
-      { id: randomUUID(), name: "Laptop", quantity: 15, createdAt: new Date(), updatedAt: new Date() },
-      { id: randomUUID(), name: "Mouse", quantity: 45, createdAt: new Date(), updatedAt: new Date() },
-      { id: randomUUID(), name: "Keyboard", quantity: 8, createdAt: new Date(), updatedAt: new Date() },
-      { id: randomUUID(), name: "Monitor", quantity: 25, createdAt: new Date(), updatedAt: new Date() },
-      { id: randomUUID(), name: "Headphones", quantity: 3, createdAt: new Date(), updatedAt: new Date() },
+      { id: randomUUID(), name: "Laptop", quantity: 15, createdAt: new Date(), updatedAt: new Date(),  description: "High-end gaming laptop",
+      price: 1500,
+      weighted: null,
+      category: "Electronics", },
+      { id: randomUUID(), name: "Mouse", quantity: 45, createdAt: new Date(), updatedAt: new Date(), description: "Wireless mouse",
+      price: 25,
+      weighted: null,
+      category: "Electronics" },
+      { id: randomUUID(), name: "Keyboard", quantity: 8, createdAt: new Date(), updatedAt: new Date(),  description: "Mechanical keyboard",
+      price: 80,
+      weighted: null,
+      category: "Electronics", },
+      { id: randomUUID(), name: "Monitor", quantity: 25, createdAt: new Date(), updatedAt: new Date() ,  description: "24-inch monitor",
+      price: 200,
+      weighted: null,
+      category: "Electronics", },
+      { id: randomUUID(), name: "Headphones", quantity: 3, createdAt: new Date(), updatedAt: new Date(), description: "Noise-cancelling headphones",
+      price: 120,
+      weighted: null,
+      category: "Electronics", },
     ];
 
     products.forEach(product => {
-      this.products.set(product.id, product);
+      return this.products.set(product.id, product);
     });
   }
 
@@ -114,7 +127,6 @@ export class MemStorage implements IStorage {
       lastName: insertUser.lastName || null,
       email: insertUser.email || null,
       phone: insertUser.phone || null,
-      nationality: insertUser.nationality || null,
       role: insertUser.role || "user",
       supply: insertUser.supply || null,
       supplyQuantity: insertUser.supplyQuantity || null,
@@ -144,7 +156,6 @@ export class MemStorage implements IStorage {
       lastName: userData.lastName,
       email: userData.email,
       phone: userData.phone,
-      nationality: userData.nationality,
       role: userData.role,
       supply: userData.supply || null,
       supplyQuantity: userData.supplyQuantity || null,
@@ -240,6 +251,10 @@ export class MemStorage implements IStorage {
       quantity: productData.quantity,
       createdAt: new Date(),
       updatedAt: new Date(),
+      description: null,
+      price: 0,
+      weighted: null,
+      category: ""
     };
     this.products.set(id, product);
     return product;

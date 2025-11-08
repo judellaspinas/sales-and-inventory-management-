@@ -3,16 +3,16 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/hooks/use-auth";
+import { apiRequest } from "../client/src/lib/queryClient";
+import { useAuth } from "../attached_assets/use-auth_1757427482427";
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "../client/src/components/ui/button";
+import { Input } from "../client/src/components/ui/input";
+import { Label } from "../client/src/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "../client/src/components/ui/card";
+import { Alert, AlertDescription } from "../client/src/components/ui/alert";
 import { User, Edit3, Save, X, LogOut, Home, ArrowLeft, Package } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "../client/src/hooks/use-toast";
 
 const updateProfileSchema = z.object({
   firstName: z.string().optional(),
@@ -54,7 +54,6 @@ export default function ProfilePage() {
       lastName: "",
       email: "",
       phone: "",
-      nationality: "",
       supply: "",
       supplyQuantity: undefined,
     },

@@ -1,6 +1,6 @@
-import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "../attached_assets/use-auth_1757427482427";
+import { Button } from "../client/src/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../client/src/components/ui/card";
 import { Shield, Users, ShoppingBag, DollarSign, LogOut, User, Plus, RotateCcw, FileText, Settings, UserCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { useEffect } from "react";

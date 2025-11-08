@@ -12,7 +12,6 @@ export const users = pgTable("users", {
   lastName: text("last_name"),
   email: text("email"),
   phone: text("phone"),
-  nationality: text("nationality"),
   role: text("role").notNull().default("user"),
   supply: text("supply"),
   supplyQuantity: integer("supply_quantity"),
@@ -65,7 +64,6 @@ export const registerSchema = z.object({
   confirmPassword: z.string(),
   email: z.string().email("Invalid email address"),
   phone: z.string().regex(/^[0-9]{11}$/, "Phone number must be 11 digits"),
-  nationality: z.string().min(1, "Nationality is required"),
   role: z.enum(["user", "staff", "admin", "supplier"]).default("user"),
   supply: z.string().optional(),
   supplyQuantity: z.number().positive().optional(),
@@ -88,7 +86,6 @@ export const updateProfileSchema = z.object({
   lastName: z.string().optional(),
   email: z.string().email().optional(),
   phone: z.string().regex(/^[0-9]{11}$/).optional(),
-  nationality: z.string().optional(),
   supply: z.string().optional(),
   supplyQuantity: z.number().positive().optional(),
 });
@@ -107,14 +104,3 @@ export const updateProductSchema = z.object({
   name: z.string().min(1, "Product name is required").optional(),
   quantity: z.number().min(0, "Quantity must be non-negative").optional(),
 });
-
-//ORDER SCHEMA
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
-export type Session = typeof sessions.$inferSelect;
-export type Product = typeof products.$inferSelect;
-export type InsertProduct = z.infer<typeof insertProductSchema>;
-export type UpdateProduct = z.infer<typeof updateProductSchema>;
-export type LoginRequest = z.infer<typeof loginSchema>;
-export type RegisterRequest = z.infer<typeof registerSchema>;
-export type UpdateProfileRequest = z.infer<typeof updateProfileSchema>;

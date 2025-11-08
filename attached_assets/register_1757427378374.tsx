@@ -3,16 +3,16 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest } from "../client/src/lib/queryClient";
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "../client/src/components/ui/button";
+import { Input } from "../client/src/components/ui/input";
+import { Label } from "../client/src/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../client/src/components/ui/select";
+import { Card, CardContent } from "../client/src/components/ui/card";
+import { Alert, AlertDescription } from "../client/src/components/ui/alert";
 import { UserPlus, Loader2, ArrowLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "../client/src/hooks/use-toast";
 
 const registerSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -59,7 +59,6 @@ export default function RegisterPage() {
       confirmPassword: "",
       email: "",
       phone: "",
-      nationality: "",
       birthdate: "",
       role: "user",
       supply: "",
@@ -287,25 +286,6 @@ export default function RegisterPage() {
                     </p>
                   )}
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="nationality" className="text-foreground font-medium">
-                    Nationality
-                  </Label>
-                  <Input
-                    id="nationality"
-                    type="text"
-                    placeholder="Enter nationality"
-                    data-testid="input-nationality"
-                    {...form.register("nationality")}
-                    className="h-10 transition-all duration-200"
-                  />
-                  {form.formState.errors.nationality && (
-                    <p className="text-sm text-destructive">
-                      {form.formState.errors.nationality.message}
-                    </p>
-                  )}
-                </div>
               </div>
 
               <div className="space-y-2">
@@ -317,7 +297,6 @@ export default function RegisterPage() {
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="user">User</SelectItem>
                     <SelectItem value="staff">Staff</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="supplier">Supplier</SelectItem>

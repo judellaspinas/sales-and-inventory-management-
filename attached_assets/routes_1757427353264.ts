@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { loginSchema, registerSchema, updateProfileSchema, insertProductSchema, updateProductSchema } from "@shared/schema";
+import { storage } from "../server/storage";
+import { loginSchema, registerSchema, updateProfileSchema, insertProductSchema, updateProductSchema } from "../shared/schema";
 import bcrypt from "bcrypt";
 import session from "express-session";
 import MemoryStore from "memorystore";

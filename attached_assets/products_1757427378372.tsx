@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "../client/src/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../client/src/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../client/src/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../client/src/components/ui/dialog";
+import { Input } from "../client/src/components/ui/input";
+import { Label } from "../client/src/components/ui/label";
+import { Badge } from "../client/src/components/ui/badge";
+import { useToast } from "../client/src/hooks/use-toast";
 import { Loader2, Plus, Edit, Trash2, Package } from "lucide-react";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../client/src/components/ui/alert-dialog";
 import { useLocation } from "wouter";
-import { apiRequest } from "@/lib/queryClient";
-import type { Product } from "@shared/schema";
+import { apiRequest } from "../client/src/lib/queryClient";
+import type { Product } from "../shared/schema";
 
 interface ProductFormData {
   name: string;
@@ -195,7 +195,7 @@ export default function ProductsPage() {
                     <Input
                       id="product-name"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={(e: { target: { value: any; }; }) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="Enter product name"
                       data-testid="input-product-name"
                     />
@@ -207,7 +207,7 @@ export default function ProductsPage() {
                       type="number"
                       min="0"
                       value={formData.quantity}
-                      onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+                      onChange={(e: { target: { value: string; }; }) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
                       placeholder="Enter quantity"
                       data-testid="input-product-quantity"
                     />
@@ -325,7 +325,7 @@ export default function ProductsPage() {
                                   <Input
                                     id="edit-product-name"
                                     value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    onChange={(e: { target: { value: any; }; }) => setFormData({ ...formData, name: e.target.value })}
                                     placeholder="Enter product name"
                                     data-testid="input-edit-product-name"
                                   />
@@ -337,7 +337,7 @@ export default function ProductsPage() {
                                     type="number"
                                     min="0"
                                     value={formData.quantity}
-                                    onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+                                    onChange={(e: { target: { value: string; }; }) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
                                     placeholder="Enter quantity"
                                     data-testid="input-edit-product-quantity"
                                   />
