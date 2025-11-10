@@ -10,7 +10,7 @@ import {
   type Product,
   type InsertProduct,
   type UpdateProduct,
-} from "@shared/schema";
+} from "../shared/schema.js";
 
 /* -------------------- GLOBAL MONGO CONNECTION -------------------- */
 let cached = (global as any)._mongoConnection;

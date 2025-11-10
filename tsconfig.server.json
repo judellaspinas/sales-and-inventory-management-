@@ -4,11 +4,13 @@
     "noEmit": false,
     "outDir": "dist",
     "target": "ES2020",
-    "module": "node18",
-    "moduleResolution": "node",
+    "module": "Node18",
+    "moduleResolution": "Node16",
     "esModuleInterop": true,
-    "allowImportingTsExtensions": false,
-    "strict": true
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true
   },
   "include": ["server/**/*"]
 }

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import bcrypt from "bcrypt";
 import { ZodError } from "zod";
 import { storage } from "./storage.js"; // keep .js for Vercel/ESM
-import { loginSchema, registerSchema } from "@shared/schema";
+import { loginSchema, registerSchema } from "../shared/schema.js";
 
 // Register routes for an Express app
 export function registerRoutes(app: Express) {
