@@ -9,7 +9,7 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod";
+import { string, z } from "zod";
 
 /* ========================
    USERS TABLE
@@ -123,6 +123,7 @@ export const updateProfileSchema = z.object({
 export const insertProductSchema = createInsertSchema(products)
   .omit({ id: true, createdAt: true, updatedAt: true })
   .extend({
+    id: string(),
     name: z.string().min(1, "Product name is required"),
     description: z.string().optional(),
     price: z.number().min(0, "Price must be non-negative"),

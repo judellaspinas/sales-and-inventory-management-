@@ -204,11 +204,11 @@ class MongoStorage implements IStorage {
   }
 
   async updateUserPassword(username: string, hashed: string) {
-    await UserModel.updateOne({ username }, { $set: { password: hashed } });
+    await UserModel.updateOne({ username }, { password: hashed });
   }
 
   async unlockUserAccount(username: string) {
-    await UserModel.updateOne({ username }, { $set: { loginAttempts: 0, cooldownUntil: null } });
+    await UserModel.updateOne({ username }, { loginAttempts: 0, cooldownUntil: null });
   }
 
   async incrementLoginAttempts(username: string) {
@@ -219,18 +219,15 @@ class MongoStorage implements IStorage {
   }
 
   async resetLoginAttempts(username: string) {
-    await UserModel.updateOne(
-      { username },
-      { $set: { loginAttempts: 0, cooldownUntil: null, lastFailedLogin: null } }
-    );
+    await UserModel.updateOne({ username }, { loginAttempts: 0, cooldownUntil: null, lastFailedLogin: null });
   }
 
   async setCooldown(username: string, cooldownUntil: Date | null) {
-    await UserModel.updateOne({ username }, { $set: { cooldownUntil } });
+    await UserModel.updateOne({ username }, { cooldownUntil });
   }
 
   async clearCooldown(username: string) {
-    await UserModel.updateOne({ username }, { $set: { cooldownUntil: null } });
+    await UserModel.updateOne({ username }, { cooldownUntil: null });
   }
 
   /* -------------------- PRODUCTS -------------------- */
@@ -251,7 +248,7 @@ class MongoStorage implements IStorage {
   }
 
   async createProduct(productData: InsertProduct): Promise<Product> {
-   const id = (productData as any).id || randomUUID();
+    const id = productData.id ?? randomUUID();
     const doc = await ProductModel.create({ ...productData, id, createdAt: new Date(), updatedAt: new Date() });
     return mapProduct(doc.toObject());
   }
@@ -274,7 +271,7 @@ class MongoStorage implements IStorage {
     const product = await ProductModel.findOne({ id });
     if (!product) throw new Error("Product not found");
 
-    product.quantity = Math.max(0, (product.quantity || 0) - quantity);
+    product.quantity = Math.max(0, (product.quantity ?? 0) - quantity);
     product.updatedAt = new Date();
     await product.save();
 
@@ -282,7 +279,7 @@ class MongoStorage implements IStorage {
       productId: product.id,
       productName: product.name,
       quantitySold: quantity,
-      totalPrice: (product.price || 0) * quantity,
+      totalPrice: (product.price ?? 0) * quantity,
       createdAt: new Date(),
     });
   }
@@ -290,10 +287,9 @@ class MongoStorage implements IStorage {
   /* -------------------- REPORTS -------------------- */
   async getSalesReport(period: "daily" | "weekly") {
     const now = new Date();
-    const startDate =
-      period === "daily"
-        ? new Date(now.getFullYear(), now.getMonth(), now.getDate())
-        : new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+    const startDate = period === "daily"
+      ? new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      : new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
 
     const sales = await SaleModel.find({ createdAt: { $gte: startDate } }).lean();
     const totalProductsSold = sales.reduce((sum, s) => sum + s.quantitySold, 0);
@@ -328,4 +324,3 @@ class MongoStorage implements IStorage {
 }
 
 export const storage: IStorage = new MongoStorage();
-
