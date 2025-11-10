@@ -5,9 +5,11 @@ import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
+import { fileURLToPath } from "url";
 
 const viteLogger = createLogger();
 
+// -------------------- Logging --------------------
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -19,10 +21,11 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
-export async function setupVite(app: Express, server: Server) {
+// -------------------- Vite Dev Setup --------------------
+export async function setupVite(app: Express, server?: Server) {
   const serverOptions = {
     middlewareMode: true,
-    hmr: { server },
+    hmr: server ? { server } : undefined,
     allowedHosts: true as const,
   };
 
@@ -40,24 +43,26 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
 
+  // use Vite dev middleware
   app.use(vite.middlewares);
+
+  // fallback to index.html
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 
     try {
-      const clientTemplate = path.resolve(
-        import.meta.dirname,
-        "..",
-        "client",
-        "index.html",
-      );
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
 
-      // always reload the index.html file from disk incase it changes
+      const clientTemplate = path.resolve(__dirname, "..", "client", "index.html");
+
+      // reload template on each request (HMR)
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`,
       );
+
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
@@ -67,8 +72,12 @@ export async function setupVite(app: Express, server: Server) {
   });
 }
 
+// -------------------- Production Static Serving --------------------
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+
+  const distPath = path.resolve(__dirname, "public");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
@@ -78,7 +87,7 @@ export function serveStatic(app: Express) {
 
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
+  // fallback to index.html
   app.use("*", (_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
   });

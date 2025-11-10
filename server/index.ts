@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
-import { registerRoutes } from "./routes.js";
+import { registerRoutes } from "./routes.js"; // keep .js for ESM
 import { setupVite, serveStatic, log } from "./vite";
 
 import mongoose from "mongoose";
@@ -43,11 +43,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// -------------------- Async Setup --------------------
 (async () => {
-  // --- Connect to MongoDB ---
+  // --- MongoDB Connection ---
   const uri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/loginDB";
+  mongoose.set("strictQuery", true);
   try {
-    mongoose.set("strictQuery", true);
     await mongoose.connect(uri);
     log("✅ MongoDB connected");
   } catch (err) {
@@ -55,39 +56,26 @@ app.use((req, res, next) => {
     process.exit(1);
   }
 
-  const server = await registerRoutes(app);
+  // --- Register API Routes ---
+  await registerRoutes(app);
 
-  // --- Global Error Handler ---
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    res.status(status).json({ message: err.message || "Internal Server Error" });
-    console.error("Server error:", err);
-  });
-
-  // --- Vite or Static Setup ---
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
+  // --- Serve frontend ---
+  if (process.env.NODE_ENV === "development") {
+    await setupVite(app); // dev only
   } else {
-    serveStatic(app);
+    serveStatic(app); // production
   }
+})().catch(err => {
+  console.error("Failed to initialize server:", err);
+  process.exit(1);
+});
 
-  // --- Cross-platform Server Listener ---
-  const port = parseInt(process.env.PORT || "3000", 10);
-  const host = process.platform === "win32" ? "127.0.0.1" : "0.0.0.0";
+// --- Global Error Handler ---
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({ message: err.message || "Internal Server Error" });
+  console.error("Server error:", err);
+});
 
-  server.listen(port, host, () => {
-    log(`✅ Server running at http://${host}:${port}`);
-  });
-
-  // --- Graceful Shutdown ---
-  const shutdown = async () => {
-    try {
-      await mongoose.disconnect();
-      log("🛑 MongoDB disconnected, shutting down server...");
-    } finally {
-      process.exit(0);
-    }
-  };
-  process.on("SIGINT", shutdown);
-  process.on("SIGTERM", shutdown);
-})();
+// --- Export the app for Vercel Serverless ---
+export default app;

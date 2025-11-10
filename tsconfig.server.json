@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist",
+    "target": "ES2020",      // ES2017 or higher
+    "module": "node18",      // Node16/18/20 or ESNext
+    "moduleResolution": "Bundler",
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": false
+  },
+  "include": ["server/**/*"]
+}
