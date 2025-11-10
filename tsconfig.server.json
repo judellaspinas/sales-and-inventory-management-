@@ -3,11 +3,12 @@
   "compilerOptions": {
     "noEmit": false,
     "outDir": "dist",
-    "target": "ES2020",      // ES2017 or higher
-    "module": "node18",      // Node16/18/20 or ESNext
-    "moduleResolution": "Bundler",
+    "target": "ES2020",
+    "module": "node18",
+    "moduleResolution": "node",
     "esModuleInterop": true,
-    "allowImportingTsExtensions": false
+    "allowImportingTsExtensions": false,
+    "strict": true
   },
   "include": ["server/**/*"]
 }
