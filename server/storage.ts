@@ -168,172 +168,47 @@ function mapSession(doc: any): Session {
 
 class MongoStorage implements IStorage {
   /* -------------------- USERS -------------------- */
-  async getUser(id: string) {
+  async getUser(id: string): Promise<User | undefined> {
     const doc = await UserModel.findById(id).lean();
     return doc ? mapUser(doc) : undefined;
   }
 
-  async getUserByUsername(username: string) {
+  async getUserByUsername(username: string): Promise<User | undefined> {
     const doc = await UserModel.findOne({ username }).lean();
     return doc ? mapUser(doc) : undefined;
   }
 
-  async createUser(insertUser: InsertUser) {
+  async createUser(insertUser: InsertUser): Promise<User> {
     const hashedPassword = await bcrypt.hash(insertUser.password, 10);
-    const doc = await UserModel.create({
-      ...insertUser,
-      password: hashedPassword,
-      createdAt: new Date(),
-    });
+    const doc = await UserModel.create({ ...insertUser, password: hashedPassword });
     return mapUser(doc.toObject());
   }
 
-  async registerUser(userData: Omit<RegisterRequest, "confirmPassword">) {
-    const existing = await UserModel.findOne({ username: userData.username }).lean();
-    if (existing) throw new Error("Username already exists");
+  async registerUser(userData: Omit<RegisterRequest, "confirmPassword">): Promise<User> {
+    const exists = await UserModel.exists({ username: userData.username });
+    if (exists) throw new Error("Username already exists");
 
     const hashedPassword = await bcrypt.hash(userData.password, 10);
-    const doc = await UserModel.create({
-      ...userData,
-      password: hashedPassword,
-      createdAt: new Date(),
-    });
+    const doc = await UserModel.create({ ...userData, password: hashedPassword });
     return mapUser(doc.toObject());
   }
 
-  // <-- IMPLEMENTED updateUser (required by IStorage) -->
-  async updateUser(id: string, updates: Partial<User>) {
+  async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
     const doc = await UserModel.findByIdAndUpdate(id, updates, { new: true }).lean();
     return doc ? mapUser(doc) : undefined;
   }
 
-  /* -------------------- PRODUCTS -------------------- */
-  async getAllProducts() {
-    const docs = await ProductModel.find({}).lean();
-    return docs.map(mapProduct);
+  async getAllUsers(): Promise<User[]> {
+    const docs = await UserModel.find({ role: { $in: ["staff", "supplier"] } }).lean();
+    return docs.map(mapUser);
   }
 
-  async getProductByManualId(id: string) {
-    try {
-      // Try manual product code (e.g., "HMR-001")
-      let product = await ProductModel.findOne({ id }).lean();
-
-      // Fallback: MongoDB ObjectId
-      if (!product && /^[0-9a-fA-F]{24}$/.test(id)) {
-        product = await ProductModel.findById(id).lean();
-      }
-
-      return product ? mapProduct(product) : undefined;
-    } catch (err) {
-      console.error("getProductByManualId error:", err);
-      throw new Error("Failed to fetch product");
-    }
-  }
-
- async getProduct(id: string): Promise<Product | undefined> {
-  const doc = await ProductModel.findOne({ id }).lean();
-  return doc ? mapProduct(doc) : undefined;
-}
-
-
-  async createProduct(productData: InsertProduct) {
-    const productId = (productData as any).id || randomUUID();
-    const doc = await ProductModel.create({
-      ...productData,
-      id: productId,
-      category: productData.category || "Uncategorized", 
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    return mapProduct(doc.toObject());
-  }
-
- async updateProduct(id: string, updates: UpdateProduct): Promise<Product | undefined> {
-  const doc = await ProductModel.findOneAndUpdate(
-    { id },
-    { ...updates, updatedAt: new Date() },
-    { new: true }
-  ).lean();
-  return doc ? mapProduct(doc) : undefined;
-}
-
-
-  async deleteProduct(id: string): Promise<boolean> {
-  const res = await ProductModel.deleteOne({ id });
-  return res.deletedCount === 1;
-}
-
-  async deductProductStock(id: string, quantity: number) {
-  // Only look up using your custom 'id' field, not Mongo _id
-  const product = await ProductModel.findOne({ id });
-  if (!product) throw new Error("Product not found");
-
-  const newQuantity = Math.max(0, (product.quantity || 0) - quantity);
-  product.quantity = newQuantity;
-  product.updatedAt = new Date();
-  await product.save();
-
-  // ✅ Record sale in database for reporting
-  await SaleModel.create({
-    productId: product.id,
-    productName: product.name,
-    quantitySold: quantity,
-    totalPrice: (product.price || 0) * quantity,
-    createdAt: new Date(),
-  });
-}
-
-
-  /* -------------------- REPORTS -------------------- */
-  async getSalesReport(period: "daily" | "weekly") {
-    const now = new Date();
-    const startDate =
-      period === "daily"
-        ? new Date(now.getFullYear(), now.getMonth(), now.getDate())
-        : new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
-
-    const sales = await SaleModel.find({ createdAt: { $gte: startDate } }).lean();
-    const totalProductsSold = sales.reduce((sum, s) => sum + s.quantitySold, 0);
-    const totalSales = sales.reduce((sum, s) => sum + s.totalPrice, 0);
-    const lowStockProducts = await ProductModel.find({ quantity: { $lt: 10 } }).lean();
-
-    return {
-      totalProductsSold,
-      totalSales,
-      lowStockProducts: lowStockProducts.map(mapProduct),
-      timestamp: new Date().toLocaleString(),
-    };
-  }
-
-  /* -------------------- ADMIN & SECURITY -------------------- */
   async updateUserPassword(username: string, hashed: string) {
     await UserModel.updateOne({ username }, { $set: { password: hashed } });
   }
 
   async unlockUserAccount(username: string) {
     await UserModel.updateOne({ username }, { $set: { loginAttempts: 0, cooldownUntil: null } });
-  }
-
-  async getAllUsers() {
-    const docs = await UserModel.find({ role: { $in: ["staff", "supplier"] } }, "-password").lean();
-    return docs.map(mapUser);
-  }
-
-  async createSession(userId: string) {
-    const id = randomUUID();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const doc = await SessionModel.create({ id, userId, expiresAt });
-    return mapSession(doc.toObject());
-  }
-
-  async getSession(sessionId: string) {
-    const doc = await SessionModel.findOne({ id: sessionId }).lean();
-    return doc ? mapSession(doc) : undefined;
-  }
-
-  async deleteSession(sessionId: string) {
-    const res = await SessionModel.deleteOne({ id: sessionId });
-    return res.deletedCount === 1;
   }
 
   async incrementLoginAttempts(username: string) {
@@ -357,7 +232,100 @@ class MongoStorage implements IStorage {
   async clearCooldown(username: string) {
     await UserModel.updateOne({ username }, { $set: { cooldownUntil: null } });
   }
+
+  /* -------------------- PRODUCTS -------------------- */
+  async getAllProducts(): Promise<Product[]> {
+    const docs = await ProductModel.find({}).lean();
+    return docs.map(mapProduct);
+  }
+
+  async getProductByManualId(id: string): Promise<Product | undefined> {
+    let doc = await ProductModel.findOne({ id }).lean();
+    if (!doc && /^[0-9a-fA-F]{24}$/.test(id)) doc = await ProductModel.findById(id).lean();
+    return doc ? mapProduct(doc) : undefined;
+  }
+
+  async getProduct(id: string): Promise<Product | undefined> {
+    const doc = await ProductModel.findOne({ id }).lean();
+    return doc ? mapProduct(doc) : undefined;
+  }
+
+  async createProduct(productData: InsertProduct): Promise<Product> {
+   const id = (productData as any).id || randomUUID();
+    const doc = await ProductModel.create({ ...productData, id, createdAt: new Date(), updatedAt: new Date() });
+    return mapProduct(doc.toObject());
+  }
+
+  async updateProduct(id: string, updates: UpdateProduct): Promise<Product | undefined> {
+    const doc = await ProductModel.findOneAndUpdate(
+      { id },
+      { ...updates, updatedAt: new Date() },
+      { new: true }
+    ).lean();
+    return doc ? mapProduct(doc) : undefined;
+  }
+
+  async deleteProduct(id: string): Promise<boolean> {
+    const res = await ProductModel.deleteOne({ id });
+    return res.deletedCount === 1;
+  }
+
+  async deductProductStock(id: string, quantity: number) {
+    const product = await ProductModel.findOne({ id });
+    if (!product) throw new Error("Product not found");
+
+    product.quantity = Math.max(0, (product.quantity || 0) - quantity);
+    product.updatedAt = new Date();
+    await product.save();
+
+    await SaleModel.create({
+      productId: product.id,
+      productName: product.name,
+      quantitySold: quantity,
+      totalPrice: (product.price || 0) * quantity,
+      createdAt: new Date(),
+    });
+  }
+
+  /* -------------------- REPORTS -------------------- */
+  async getSalesReport(period: "daily" | "weekly") {
+    const now = new Date();
+    const startDate =
+      period === "daily"
+        ? new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        : new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+
+    const sales = await SaleModel.find({ createdAt: { $gte: startDate } }).lean();
+    const totalProductsSold = sales.reduce((sum, s) => sum + s.quantitySold, 0);
+    const totalSales = sales.reduce((sum, s) => sum + s.totalPrice, 0);
+    const lowStockProducts = await ProductModel.find({ quantity: { $lt: 10 } }).lean();
+
+    return {
+      totalProductsSold,
+      totalSales,
+      lowStockProducts: lowStockProducts.map(mapProduct),
+      timestamp: new Date().toLocaleString(),
+    };
+  }
+
+  /* -------------------- SESSIONS -------------------- */
+  async createSession(userId: string): Promise<Session> {
+    const id = randomUUID();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const doc = await SessionModel.create({ id, userId, expiresAt });
+    return mapSession(doc.toObject());
+  }
+
+  async getSession(sessionId: string): Promise<Session | undefined> {
+    const doc = await SessionModel.findOne({ id: sessionId }).lean();
+    return doc ? mapSession(doc) : undefined;
+  }
+
+  async deleteSession(sessionId: string): Promise<boolean> {
+    const res = await SessionModel.deleteOne({ id: sessionId });
+    return res.deletedCount === 1;
+  }
 }
 
-/* ----------------------------- EXPORT ------------------------------ */
 export const storage: IStorage = new MongoStorage();
+

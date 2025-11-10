@@ -43,10 +43,17 @@ export default defineConfig({
     outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,
   },
-  server: {
-    fs: {
-      strict: true,
-      deny: ["**/.*"],
+ server: {
+  fs: {
+    strict: true,
+    deny: ["**/.*"],
+  },
+  port: 5173, // optional but useful for consistency
+  proxy: {
+    "/api": {
+      target: "http://localhost:3000", // your Express dev server
+      changeOrigin: true,
     },
   },
+},
 });
