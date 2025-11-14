@@ -28,8 +28,9 @@ export async function connectDB(uri: string) {
 }
 
 /* -------------------- SCHEMAS -------------------- */
+// -------------------- User --------------------
 const UserSchema = new Schema({
-  username: { type: String, required: true, unique: true, index: true },
+  username: { type: String, required: true, unique: true }, // unique index only
   password: { type: String, required: true },
   firstName: String,
   lastName: String,
@@ -43,10 +44,15 @@ const UserSchema = new Schema({
   cooldownUntil: Date,
   createdAt: { type: Date, default: () => new Date() },
 }, { versionKey: false });
+
+// Optional compound index for role-based queries
+UserSchema.index({ role: 1 });
+
 const UserModel = model("User", UserSchema);
 
+// -------------------- Product --------------------
 const ProductSchema = new Schema({
-  id: { type: String, required: true, unique: true, index: true },
+  id: { type: String, required: true, unique: true }, // unique only
   name: { type: String, required: true },
   description: { type: String, default: "" },
   price: { type: Number, required: true, default: 0 },
@@ -56,8 +62,13 @@ const ProductSchema = new Schema({
   createdAt: { type: Date, default: () => new Date() },
   updatedAt: { type: Date, default: () => new Date() },
 }, { versionKey: false });
+
+// Optional index for category filter queries
+ProductSchema.index({ category: 1 });
+
 const ProductModel = model("Product", ProductSchema);
 
+// -------------------- Sale --------------------
 const SaleSchema = new Schema({
   productId: { type: String, required: true },
   productName: { type: String, required: true },
@@ -65,15 +76,20 @@ const SaleSchema = new Schema({
   totalPrice: { type: Number, required: true },
   createdAt: { type: Date, default: () => new Date() },
 }, { versionKey: false });
+
 const SaleModel = model("Sale", SaleSchema);
 
+// -------------------- Session --------------------
 const SessionSchema = new Schema({
-  id: { type: String, unique: true, index: true },
+  id: { type: String, unique: true },
   userId: { type: String, required: true },
-  expiresAt: { type: Date, required: true, index: true },
+  expiresAt: { type: Date, required: true }, // TTL index only
   createdAt: { type: Date, default: () => new Date() },
 }, { versionKey: false });
+
+// TTL index for auto-expiration
 SessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
 const SessionModel = model("Session", SessionSchema);
 
 /* -------------------- MAPPERS -------------------- */
