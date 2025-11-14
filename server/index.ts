@@ -1,45 +1,34 @@
+// server/index.ts
 import express, { type Request, type Response, type NextFunction } from "express";
 import cookieParser from "cookie-parser";
+import { registerRoutes } from "./routes.js"; // named import
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 dotenv.config();
 
-import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic, log } from "./vite.js";
 
-/* ============================================================
-   APP INITIALIZATION
-============================================================ */
 const app = express();
-
-app.use(express.json({ limit: "2mb" }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-/* ============================================================
-   LOGGING MIDDLEWARE
-============================================================ */
+// ------------------ Logging Middleware ------------------
 app.use((req, res, next) => {
   const start = Date.now();
   let capturedJsonResponse: Record<string, any> | undefined;
 
-  const originalResJson = res.json.bind(res);
+  const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
     capturedJsonResponse = bodyJson;
-    return originalResJson(bodyJson, ...args);
+    return originalResJson.apply(res, [bodyJson, ...args]);
   };
 
   res.on("finish", () => {
     if (req.path.startsWith("/api")) {
       let logLine = `${req.method} ${req.path} ${res.statusCode} in ${Date.now() - start}ms`;
-      if (capturedJsonResponse) {
-        try {
-          const jsonStr = JSON.stringify(capturedJsonResponse);
-          logLine += ` :: ${jsonStr.length > 80 ? jsonStr.slice(0, 79) + "…" : jsonStr}`;
-        } catch {
-          logLine += " :: [unserializable JSON]";
-        }
-      }
+      if (capturedJsonResponse) logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      if (logLine.length > 100) logLine = logLine.slice(0, 99) + "…";
       log(logLine);
     }
   });
@@ -47,65 +36,52 @@ app.use((req, res, next) => {
   next();
 });
 
-/* ============================================================
-   MONGODB CONNECTION
-============================================================ */
+// ------------------ MongoDB Connection ------------------
 let isConnected = false;
 async function connectDB() {
   if (isConnected) return;
-
-  try {
-    const uri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/loginDB";
-    mongoose.set("strictQuery", true);
-    await mongoose.connect(uri);
-    log("✅ MongoDB connected");
-    isConnected = true;
-  } catch (err) {
-    console.error("❌ MongoDB connection error:", err);
-    throw new Error("Database connection failed");
-  }
+  const uri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/loginDB";
+  mongoose.set("strictQuery", true);
+  await mongoose.connect(uri);
+  log("✅ MongoDB connected");
+  isConnected = true;
 }
 
-/* ============================================================
-   API ROUTES
-============================================================ */
-await registerRoutes(app); // ensure async routes are registered
+// ------------------ Register API Routes ------------------
+registerRoutes(app);
 
-/* ============================================================
-   FRONTEND SETUP (Vite or Static)
-============================================================ */
+// ------------------ Global Error Handler (after routes) ------------------
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({ message: err.message || "Internal Server Error" });
+  console.error("Server error:", err);
+});
+
+// ------------------ Frontend Setup ------------------
 let frontendReady = false;
-async function setupFrontend() {
+async function setupFrontendOnce() {
   if (frontendReady) return;
-
   if (process.env.NODE_ENV === "development") {
     await setupVite(app);
   } else {
     serveStatic(app);
   }
-
   frontendReady = true;
 }
 
-/* ============================================================
-   GLOBAL ERROR HANDLER
-============================================================ */
-app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-  console.error("💥 Server error:", err);
-  const status = err.status || err.statusCode || 500;
-  res.status(status).json({ message: err.message || "Internal Server Error" });
-});
-
-/* ============================================================
-   SERVERLESS HANDLER (Vercel)
-============================================================ */
+// ------------------ Serverless Handler ------------------
 export default async function handler(req: Request, res: Response) {
   try {
     await connectDB();
-    await setupFrontend();
-    return app(req, res);
+    await setupFrontendOnce();
+
+    // Use Express as a "request handler"
+    // Wrap in a promise to ensure Vercel waits for it
+    await new Promise<void>((resolve, reject) => {
+      app(req, res, (err?: any) => (err ? reject(err) : resolve()));
+    });
   } catch (err) {
-    console.error("💥 Serverless handler error:", err);
+    console.error("Serverless handler error:", err);
     res.status(500).json({ message: "Server error" });
   }
 }
